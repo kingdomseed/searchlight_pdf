@@ -1,0 +1,20 @@
+name: searchlight_pdf
+description: Docs-first companion package for extracting PDF content into Searchlight-ready records.
+version: 0.1.0-dev.1
+topics:
+  - pdf
+  - search
+  - indexing
+  - extraction
+  - text
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  searchlight: ^0.2.1
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6
+
