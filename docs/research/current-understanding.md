@@ -3,6 +3,20 @@
 This document consolidates the current PDF-related understanding that already
 exists across the main `searchlight` repo.
 
+## Existing App Proof Point
+
+Tomekeeper already proves the basic local-search shape with real app code:
+
+- open a user-imported PDF from disk
+- extract page text incrementally
+- store one row per page with page number attribution
+- search those rows with SQLite FTS5 snippets
+
+That matters because it confirms the problem is not hypothetical. A first
+`searchlight_pdf` version does not need to solve rendering or OCR to become
+useful. It mainly needs to make the extraction-plus-record-mapping path
+reusable outside Tomekeeper's app-specific Drift service.
+
 ## What Is Already Decided
 
 - PDF parsing does not belong in the core `searchlight` package.
@@ -97,4 +111,3 @@ The current understanding above comes from:
 - `docs/research/design-decisions.md`
 - `docs/plans/2026-03-30-searchlight-post-merge-roadmap.md`
 - `docs/superpowers/specs/2026-03-24-searchlight-design.md`
-

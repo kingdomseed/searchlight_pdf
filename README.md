@@ -12,9 +12,10 @@ locking a concrete extraction library and public API.
 `searchlight_pdf` should sit above the core `searchlight` package and focus on:
 
 - PDF text extraction
-- page-to-record or chunk-to-record mapping
+- page-attributed extraction
+- page-to-record mapping in v1
 - document/page metadata preservation for search result attribution
-- optional position metadata that can support future in-view highlighting
+- deferred chunking and geometry exploration only after page-first validation
 
 ## Package Boundaries
 
@@ -53,10 +54,19 @@ interoperability. It should not collapse PDF concerns into parsedoc.
 The current documented direction is:
 
 - indexing and search first
+- `parsePdfBytes(...)` as the baseline API
+- `parsePdfFile(...)` as a VM-only convenience helper
 - rendering integration later
 - no OCR in v1
 - no viewer widgets in v1
 - no promise of geometry APIs unless the chosen extraction library proves them
+- no convenience population helper in v1
+
+Important backend note:
+
+- if the chosen backend requires runtime/bootstrap setup such as PDFium cache
+  directory initialization, that requirement must be documented explicitly by
+  the package and treated as part of the backend validation gate
 
 ## Current Open Questions
 
@@ -65,7 +75,8 @@ The current documented direction is:
 - Can it preserve page-level geometry for future in-view highlights?
 - What is the right public input surface for user-imported and remotely
   downloaded PDFs?
-- Should v1 default to page-level records, configurable chunking, or both?
+- Is page-first mapping sufficient on real Tomekeeper-style PDFs before a later
+  chunk mapper is needed?
 
 ## Repo Layout
 
@@ -82,4 +93,3 @@ The current documented direction is:
 
 This package is not implemented yet. The repository currently exists to hold
 the spec, research, and planning needed to implement it cleanly.
-
