@@ -1,4 +1,4 @@
-// Searchlight PDF
-//
-// Docs-first companion package placeholder for PDF extraction into
-// Searchlight-ready records.
+/// The current public placeholder for the `searchlight_pdf` package.
+///
+/// The package is still docs-first while the extraction backend is finalized.
+const searchlightPdfPackageName = 'searchlight_pdf';

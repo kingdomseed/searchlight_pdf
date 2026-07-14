@@ -64,9 +64,10 @@ The current documented direction is:
 
 Important backend note:
 
-- if the chosen backend requires runtime/bootstrap setup such as PDFium cache
-  directory initialization, that requirement must be documented explicitly by
-  the package and treated as part of the backend validation gate
+- `searchlight_pdf` no longer assumes `pdfrx_engine` as the default backend
+- PDFium-coupled options have to pass an explicit validation gate before they
+  can be used in app-specific tooling, and they are not the current lead for
+  the pure Dart core package
 
 ## Current Open Questions
 

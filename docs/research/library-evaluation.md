@@ -58,7 +58,7 @@ right page quickly."
 
 | Candidate | Fit For `searchlight_pdf` | Strengths | Main Risks / Reasons Not To Lead With It |
 | --- | --- | --- | --- |
-| `pdfrx_engine` with optional `pdfrx` alignment | Best current fit | Pure Dart engine package, page/document APIs, compatible with Tomekeeper's existing viewer stack, likely future path to geometry-aware viewer mapping | Built on PDFium, so the package still carries native/runtime complexity even though the Dart API is clean |
+| `pdfrx_engine` with optional `pdfrx` alignment | Rejected as the default v1 core backend | Aligns with Tomekeeper's current viewer stack and has a clean Dart-facing API | Built on PDFium, required runtime/bootstrap work in practice, and does not match the "pure Dart core, no PDFium default" requirement |
 | `syncfusion_flutter_pdf` | Strong fallback / optional backend | Mature text extraction APIs, text finding APIs, can read/edit PDFs, good if a Flutter-only app needs richer extraction helpers | Flutter-only package boundary, licensing is not plain OSS-for-all, less aligned with a general Searchlight companion that should stay broadly reusable |
 | `pdfx` | Poor fit for v1 extraction | Viewer/renderer package with broad platform coverage | The public package story is renderer/viewer-first, not text-extraction-first |
 | `pdf_text` | Weak fit | Simple page/document text APIs | iOS/Android only and effectively stale |
@@ -69,7 +69,7 @@ right page quickly."
 
 ### 1. `pdfrx_engine` / `pdfrx`
 
-Why it stands out:
+Why it was attractive:
 
 - It aligns with the current Tomekeeper stack instead of introducing a second
   PDF engine.
@@ -88,11 +88,15 @@ What makes it especially attractive for Searchlight:
 - Tomekeeper already has working code that calls page text extraction on
   user-imported PDFs, which lowers execution risk for the first adopter.
 
-Main caution:
+Why it is no longer the lead:
 
-- "Pure Dart" here does not mean "no runtime baggage." The engine is built on
-  PDFium, so packaging, initialization, and platform-specific setup still need
-  to be validated carefully.
+- The engine is built on PDFium.
+- The probe work surfaced runtime/bootstrap complexity that is not acceptable
+  for the default `searchlight_pdf` core path.
+- That makes it a mismatch for the current package constraint set:
+  - pure Dart core package
+  - no PDFium default
+  - predictable out-of-box behavior for supported targets
 
 ### 2. `syncfusion_flutter_pdf`
 
@@ -113,7 +117,8 @@ Why it should not lead v1:
 
 When to revisit it:
 
-- if `pdfrx_engine` extraction quality is not good enough on real fixture PDFs
+- if we decide the first shipped implementation can live behind a Flutter-only
+  adapter boundary instead of the pure Dart core package
 - if a Flutter-only consumer needs richer text-find helpers quickly
 - if geometry support becomes the main requirement and Syncfusion proves more
   reliable in practice
@@ -158,8 +163,16 @@ Why it is out:
 
 ### Recommended v1 backend
 
-Lead with `pdfrx_engine` as the default extraction backend for
-`searchlight_pdf`.
+Do not lock a default extraction backend into `searchlight_pdf` yet.
+
+Instead:
+
+- keep the public package work focused on typed models, mapping, and backend
+  seams
+- treat `pdfrx_engine` as a researched rejection for the default core path
+- keep `syncfusion_flutter_pdf` as a Flutter-only fallback candidate if we
+  decide to ship a consumer-specific adapter later
+- continue researching a backend that satisfies pure Dart core expectations
 
 ### Recommended package strategy
 
@@ -196,7 +209,8 @@ already proving them with little extra complexity:
 The current best engineering direction is:
 
 1. build `searchlight_pdf` around extraction plus record mapping
-2. implement page-level extraction first
+2. keep extraction behind a narrow backend seam until a backend passes the
+   current constraint gate
 3. preserve extension points for:
    - page chunks
    - geometry metadata

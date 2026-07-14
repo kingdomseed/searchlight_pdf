@@ -20,7 +20,8 @@ Primary beneficiaries:
 <background>
 Tech stack and constraints:
 - Dart package above `searchlight`
-- extraction backend should validate `pdfrx_engine` first
+- keep the extraction backend undecided until it satisfies the pure Dart core
+  constraints
 - `parsePdfBytes(...)` is the cross-platform baseline API
 - `parsePdfFile(...)` is a VM-only convenience helper
 - default Searchlight algorithm for v1 evaluation should be BM25
@@ -124,11 +125,10 @@ Error flows:
 12. Keep `searchlight_parsedoc` separate. Reuse naming and mapper conventions
     where helpful, but do not route PDF extraction through parsedoc models or
     APIs.
-13. Validate `pdfrx_engine` as the first extraction backend and isolate backend
-    usage behind a small extractor interface so a later alternate backend is
-    possible without public API churn.
-14. Document runtime/bootstrap requirements discovered during the backend spike,
-    including any PDFium/cache-directory initialization caveats.
+13. Isolate backend usage behind a small extractor interface so a later backend
+    can be selected without public API churn.
+14. Document backend spike findings explicitly, including why PDFium-coupled
+    options are not currently acceptable as the default core path.
 15. Support the first Tomekeeper topology with one global index plus filters
     rather than baking collection topology decisions into the package API.
 16. Use BM25 as the default v1 Searchlight algorithm unless measured evidence
@@ -228,12 +228,13 @@ Limits:
 Before implementation is locked, answer these questions through code inspection
 and a thin backend spike:
 
-1. Which `pdfrx_engine` entry points cleanly support:
+1. Which backend can satisfy all of these at once:
    - file extraction
    - byte extraction
    - page count
    - page text
    - optional metadata hooks
+   - no PDFium default in the core package
 2. What title derivation sources are actually reliable in practice:
    PDF metadata, outline/title data, filename, or app-provided values?
 3. Is page-only indexing sufficient on dense RPG fixtures, or do we
@@ -254,7 +255,7 @@ Create or modify these paths:
 - `./.companions/searchlight_pdf/lib/src/api/parse_pdf_file.dart`
 - `./.companions/searchlight_pdf/lib/src/api/pdf_parse_options.dart`
 - `./.companions/searchlight_pdf/lib/src/extractors/pdf_extractor.dart`
-- `./.companions/searchlight_pdf/lib/src/extractors/pdfrx_engine_pdf_extractor.dart`
+- `./.companions/searchlight_pdf/lib/src/extractors/<chosen_backend>_pdf_extractor.dart`
 - `./.companions/searchlight_pdf/lib/src/models/parsed_pdf_document.dart`
 - `./.companions/searchlight_pdf/lib/src/models/parsed_pdf_page.dart`
 - `./.companions/searchlight_pdf/lib/src/mappers/searchlight_pdf_page_record_mapper.dart`
@@ -295,7 +296,7 @@ What to avoid and why:
 
 <stages>
 Phase 1: Extraction spike and backend lock
-- Implement the backend abstraction and the first `pdfrx_engine` extractor.
+- Implement the backend abstraction before locking the first extractor.
 - Prove file and byte extraction on real fixtures.
 - Verify page counts, page ordering, **1-based** page numbering, and extracted
   page text.
@@ -437,10 +438,9 @@ Verification details:
    `parsePdfBytes(...)` is the baseline cross-platform API.
 3. The extraction model and tests lock 1-based page numbering, ordered pages,
    and `pageCount == pages.length`.
-4. `pdfrx_engine` bootstrap/runtime caveats are documented if it remains the
-   chosen backend.
-5. `pdfrx_engine` is either validated as the first backend or rejected with a
-   documented replacement decision before API freeze.
+4. Backend bootstrap/runtime caveats are documented for each evaluated option.
+5. A first backend is selected only after it passes the current package
+   constraints, or the package remains docs-first until that happens.
 6. The default page mapper emits deterministic Searchlight-ready records with
    preserved document and page attribution.
 7. Runtime tests prove extracted page records can be indexed and queried by a
