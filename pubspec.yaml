@@ -1,6 +1,9 @@
 name: searchlight_pdf
-description: Docs-first companion package for extracting PDF content into Searchlight-ready records.
-version: 0.1.0-dev.1
+description: Normalizes PDF page text into Searchlight-ready page records, with offsets back to the raw text for highlighting.
+version: 0.1.0
+homepage: https://github.com/kingdomseed/searchlight_pdf
+repository: https://github.com/kingdomseed/searchlight_pdf
+issue_tracker: https://github.com/kingdomseed/searchlight_pdf/issues
 topics:
   - pdf
   - search

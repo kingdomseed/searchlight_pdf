@@ -1,85 +1,70 @@
 # Searchlight PDF
 
-Searchlight PDF is the planned companion package for turning PDF content into
-Searchlight-ready records.
+Turns PDF page text into [Searchlight](https://github.com/kingdomseed/searchlight)-ready
+page records. Pure Dart: the app extracts text with the PDF engine it already
+uses and passes it in through `PdfTextSource`.
 
-This repo is bootstrapped docs-first. The current goal is to preserve the
-existing package scope, constraints, and implementation understanding before
-locking a concrete extraction library and public API.
+## What it does
 
-## Intended Role
+PDF engines return text with quirks that break word search. `normalizePdfPageText`
+fixes the ones seen in real rulebooks:
 
-`searchlight_pdf` should sit above the core `searchlight` package and focus on:
+- pdfium marks a word split across a line with U+0002 (`ele` U+0002 `ments`),
+  and some PDFs use a soft hyphen (U+00AD). The word is rejoined (`elements`),
+  and both parts go into `alt`, so `grid` still finds `grid-based`.
+- Letter-spaced headings (`C O M B A T`) become one word (`COMBAT`).
+- Ligatures (`ﬁ`, `ﬃ`) are expanded and curly apostrophes become `'`.
+- Line breaks, tabs, non-breaking and other spaces, and control characters
+  become single spaces.
 
-- PDF text extraction
-- page-to-record or chunk-to-record mapping
-- document/page metadata preservation for search result attribution
-- optional position metadata that can support future in-view highlighting
+The result keeps a map back to the raw text, so a match in the normalized text
+can be mapped to the engine's character boxes for highlighting:
 
-## Package Boundaries
+```dart
+final page = normalizePdfPageText(rawText);
+final at = page.text.indexOf('elements');
+final raw = page.rawRange(at, at + 'elements'.length);
+// raw.start and raw.end index the engine's text and character boxes.
+```
 
-`searchlight` owns:
+## Indexing a PDF
 
-- indexing
-- querying
-- persistence
-- filtering, facets, grouping, and sorting
+Implement `PdfTextSource` over your engine, then read pages one at a time.
+Only one page's text is held at a time, so long books never sit in memory
+whole.
 
-`searchlight_pdf` should own:
+```dart
+final class PdfrxTextSource implements PdfTextSource {
+  PdfrxTextSource(this.document);
 
-- loading PDF bytes or files
-- extracting text and page metadata
-- mapping extracted output into Searchlight-ready records
+  final PdfDocument document;
 
-`searchlight_highlight` remains the optional companion for:
+  @override
+  int get pageCount => document.pages.length;
 
-- excerpts
-- highlighted match ranges
-- HTML `<mark>` output
-- post-search snippet rendering helpers in apps
+  @override
+  Future<String> loadPageText(int pageNumber) async =>
+      (await document.pages[pageNumber - 1].loadText())?.fullText ?? '';
+}
 
-`searchlight_parsedoc` remains a separate companion for:
+final db = Searchlight.create(schema: PdfPageRecord.schema);
+await for (final record in readPdfPages(source, documentId: 'rules')) {
+  db.insert(record.toSearchlightRecord());
+}
+final hits = db.search(term: 'elements', properties: const ['text', 'alt']);
+```
 
-- Markdown extraction
-- HTML extraction
-- document structure normalization for those source types
+`fromPage` resumes reading after an interruption. The records also work with
+other indexes, such as SQLite FTS5: store `text` and `alt` in two columns.
 
-`searchlight_pdf` should be usable alongside `searchlight_highlight`, and it
-may share mapping conventions with `searchlight_parsedoc` where that improves
-interoperability. It should not collapse PDF concerns into parsedoc.
+## Not included
 
-## Current V1 Direction
+OCR (scanned PDFs have no text to extract), rendering, viewer widgets, and
+match highlighting, which belongs to the app or `searchlight_highlight`.
 
-The current documented direction is:
+## Background
 
-- indexing and search first
-- rendering integration later
-- no OCR in v1
-- no viewer widgets in v1
-- no promise of geometry APIs unless the chosen extraction library proves them
-
-## Current Open Questions
-
-- Which pure Dart or Flutter-compatible PDF library extracts text reliably?
-- Which platforms can use that library?
-- Can it preserve page-level geometry for future in-view highlights?
-- What is the right public input surface for user-imported and remotely
-  downloaded PDFs?
-- Should v1 default to page-level records, configurable chunking, or both?
-
-## Repo Layout
-
+- [`docs/research/package-spec.md`](docs/research/package-spec.md): package scope
+- [`docs/research/library-evaluation.md`](docs/research/library-evaluation.md):
+  why extraction stays outside the package
 - [`docs/research/current-understanding.md`](docs/research/current-understanding.md)
-  consolidates the current root-repo PDF notes
-- [`docs/research/library-evaluation.md`](docs/research/library-evaluation.md)
-  captures the evaluation gate for extraction libraries
-- [`docs/research/package-spec.md`](docs/research/package-spec.md) captures the
-  current intended package scope
-- [`docs/plans/2026-03-30-searchlight-pdf-implementation.md`](docs/plans/2026-03-30-searchlight-pdf-implementation.md)
-  sequences the next implementation work
-
-## Status
-
-This package is not implemented yet. The repository currently exists to hold
-the spec, research, and planning needed to implement it cleanly.
-
