@@ -41,6 +41,15 @@ void main() {
       expect(page.alt, 'non player nonplayer character');
     });
 
+    test('rejoins a word split by a soft hyphen and drops a stray one', () {
+      final page = normalizePdfPageText(
+        'co\u00ADoperate ele\u00AD\nments 4\u00AD2',
+      );
+
+      expect(page.text, 'cooperate elements 42');
+      expect(page.alt, 'co operate ele ments');
+    });
+
     test('treats a hyphen mark between non-letters as a space', () {
       expect(normalizePdfPageText('me\u00028 d\u000212').text, 'me 8 d 12');
     });

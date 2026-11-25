@@ -9,10 +9,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `PdfTextSource`: the interface an app implements over its PDF engine.
-- `normalizePdfPageText`: rejoins words pdfium split across lines (U+0002)
-  and keeps their parts as extra terms, collapses letter-spaced capitals,
+- `normalizePdfPageText`: rejoins words split by pdfium's hyphen mark
+  (U+0002) or a soft hyphen (U+00AD) and keeps their parts as extra terms, collapses letter-spaced capitals,
   expands ligatures, straightens apostrophes, and collapses whitespace and
-  control characters. `PdfPageText.rawRange` maps normalized ranges back to
+  control characters. `NormalizedPageText.rawRange` maps normalized ranges back to
   the raw text.
 - `readPdfPages` and `PdfPageRecord`: page-at-a-time records with a
   Searchlight schema.

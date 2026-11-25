@@ -5,7 +5,7 @@
 Extraction stays outside the package, behind `PdfTextSource`. Apps that show
 PDFs already ship an engine (pdfrx or pdfium_dart, both on pdfium), so the
 package takes text from the app's engine and stays pure Dart. Character
-geometry comes from that engine too; `PdfPageText.rawRange` maps matches back
+geometry comes from that engine too; `NormalizedPageText.rawRange` maps matches back
 to it.
 
 This document captures the evaluation gate that must be completed before

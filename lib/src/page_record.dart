@@ -25,7 +25,7 @@ final class PdfPageRecord {
   final int page;
 
   /// The page's normalized text.
-  final PdfPageText text;
+  final NormalizedPageText text;
 
   /// Record id, unique across documents.
   String get id => '$documentId#$page';

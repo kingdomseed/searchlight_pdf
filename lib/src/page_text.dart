@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
 /// A page's text normalized for search, with a map back to the raw text.
-final class PdfPageText {
-  PdfPageText._(this.text, this.alt, this._rawOffsets);
+final class NormalizedPageText {
+  NormalizedPageText._(this.text, this.alt, this._rawOffsets);
 
   /// Normalized text: words rejoined, whitespace collapsed.
   final String text;
@@ -29,8 +29,10 @@ final class PdfPageText {
   }
 }
 
-// pdfium writes U+0002 where a word breaks across a hyphen.
+// pdfium writes U+0002 where a word breaks across a hyphen; some PDFs carry
+// a soft hyphen (U+00AD) in their own text instead.
 const _hyphenMark = 0x02;
+const _softHyphen = 0xAD;
 const _space = 0x20;
 
 const _ligatures = {
@@ -45,13 +47,14 @@ const _ligatures = {
 
 /// Normalizes raw PDF page text for search.
 ///
-/// - Rejoins words split across a line by a hyphen (`ele-` `ments` becomes
-///   `elements`) and keeps both parts in [PdfPageText.alt].
+/// - Rejoins words split by a hyphen mark (pdfium's U+0002) or a soft hyphen
+///   (`ele-` `ments` becomes `elements`) and keeps both parts in
+///   [NormalizedPageText.alt]. A soft hyphen elsewhere is dropped.
 /// - Collapses letter-spaced capitals (`C O M B A T` becomes `COMBAT`).
 /// - Expands ligatures and turns curly apostrophes into `'`.
 /// - Turns line breaks, tabs, non-breaking and other spaces, and control
 ///   characters into single spaces, and trims the ends.
-PdfPageText normalizePdfPageText(String raw) {
+NormalizedPageText normalizePdfPageText(String raw) {
   final out = <int>[];
   final offsets = <int>[];
   final alt = StringBuffer();
@@ -82,7 +85,7 @@ PdfPageText normalizePdfPageText(String raw) {
 
   for (var i = 0; i < raw.length; i++) {
     final c = raw.codeUnitAt(i);
-    if (c == _hyphenMark) {
+    if (c == _hyphenMark || c == _softHyphen) {
       var next = i + 1;
       while (next < raw.length && _isSpace(raw.codeUnitAt(next))) {
         next++;
@@ -94,7 +97,7 @@ PdfPageText normalizePdfPageText(String raw) {
         if (joinAt != null) endWord();
         joinAt = out.length;
         i = next - 1;
-      } else {
+      } else if (c == _hyphenMark) {
         emitSpace(i);
       }
     } else if (_isSpace(c)) {
@@ -119,7 +122,7 @@ PdfPageText normalizePdfPageText(String raw) {
     offsets.removeLast();
   }
   _collapseLetterSpacing(raw, out, offsets);
-  return PdfPageText._(
+  return NormalizedPageText._(
     String.fromCharCodes(out),
     alt.toString().trimRight(),
     Int32List.fromList(offsets),

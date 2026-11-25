@@ -9,9 +9,9 @@ uses and passes it in through `PdfTextSource`.
 PDF engines return text with quirks that break word search. `normalizePdfPageText`
 fixes the ones seen in real rulebooks:
 
-- pdfium marks a word split across a line with U+0002 (`ele` U+0002 `ments`).
-  The word is rejoined (`elements`), and both parts go into `alt`, so `grid`
-  still finds `grid-based`.
+- pdfium marks a word split across a line with U+0002 (`ele` U+0002 `ments`),
+  and some PDFs use a soft hyphen (U+00AD). The word is rejoined (`elements`),
+  and both parts go into `alt`, so `grid` still finds `grid-based`.
 - Letter-spaced headings (`C O M B A T`) become one word (`COMBAT`).
 - Ligatures (`ﬁ`, `ﬃ`) are expanded and curly apostrophes become `'`.
 - Line breaks, tabs, non-breaking and other spaces, and control characters
